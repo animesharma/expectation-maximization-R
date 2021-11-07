@@ -1,9 +1,7 @@
-set.seed(1)
-
 data = runif(10000)
 
-MAX_ITERATIONS = 1000
-CONVERGENCE_THRESHOLD = 1e-6
+MAX_ITERATIONS = 5000
+CONVERGENCE_THRESHOLD = 1e-08
 dimensions = 4
 
 # modified sum only considers finite values
@@ -59,10 +57,19 @@ while (abs(log_likelihood[index] - log_likelihood[index-1]) >= CONVERGENCE_THRES
 	log_likelihood[index] = sum(log(comp_sum))
 }
 
-cat("\n", means, "\n",  sigmas, "\n")
+cat("Dimensions: ", dimensions, "\n")
+cat("Iterations: ", index, "\n")
+cat("Computed Cluster Means: ", means, "\n")
+cat("Computed Cluster Standard Deviations: ", sigmas, "\n")
 
 # Check final results using the mixtools library
 library(mixtools)
-em = normalmixEM(data, k = dimensions)
-print(em$mu)
-print(em$sigma)
+em = normalmixEM (  x = data, 
+                    k = dimensions,
+                    mu = means,
+                    sigma = sigmas,
+                    maxit = MAX_ITERATIONS,
+                    epsilon = CONVERGENCE_THRESHOLD
+                )
+cat("Library Cluster Means: ", em$mu, "\n")
+cat("Library Cluster Standard Deviations: ", em$sigma, "\n")
