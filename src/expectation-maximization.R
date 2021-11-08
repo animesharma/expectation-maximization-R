@@ -2,7 +2,7 @@ data = runif(10000)
 
 MAX_ITERATIONS = 5000
 CONVERGENCE_THRESHOLD = 1e-08
-dimensions = 4
+dimensions = 5
 
 # modified sum only considers finite values
 sum.finite = function (data) {
@@ -23,9 +23,9 @@ probs = sapply(1 : dimensions, function (i) {
 
 # Initial value of expected log likelihood
 log_likelihood = 0
-log_likelihood[2] = sum(sapply(1 : dimensions, function (i) {
-  sum.finite(log(probs[i]) + log(dnorm(data, means[i], sigmas[i])))
-}))
+log_likelihood[2] = sum(log(sapply(1 : dimensions, function (i) {
+  sum.finite(probs[i] * dnorm(data, means[i], sigmas[i]))
+})))
 
 index = 2
 
