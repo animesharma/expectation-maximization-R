@@ -1,41 +1,54 @@
+# R program to simulate the d-dimensional Expectation Maximization Clustering Algorithm
+
+# Team Members:
+
+# Animesh Sharma                - as3592
+# Yaniv Bronshtein              - yb262
+# Wanying Mo                    - wm318
+# Venkata Krishnam Raju Dalta   - vkd20
+# Vipul Gharde                  - vig4
+# Aditya Maheshwari             - am2971
+# Toshitt Ahuja                 - ta498
+# Fan Shen                      - fs470
+
+# Generate random input data from a uniform distribution
 data = runif(10000)
 
 MAX_ITERATIONS = 5000
 CONVERGENCE_THRESHOLD = 1e-08
 dimensions = 5
 
-# modified sum only considers finite values
-sum.finite = function (data) {
-	sum(data[is.finite(data)])
+# Modified sum function only considers finite values
+finite_sum = function (data) {
+	return (sum(data[is.finite(data)]))
 }
 
-# Initialize using K-Means
+# Initialize parameters using K-Means
 km = kmeans(data, dimensions)$cluster
 means = sapply(1 : dimensions, function (i) {
-  mean(data[km == i])
+	mean(data[km == i])
 })
 sigmas = sapply(1 : dimensions, function (i) {
-  sd(data[km == i])
+	sd(data[km == i])
 })
-probs = sapply(1 : dimensions, function (i) {
-  sum(km == i) / length(km)
+probabilities = sapply(1 : dimensions, function (i) {
+	sum(km == i) / length(km)
 })
 
 # Initial value of expected log likelihood
 log_likelihood = 0
 log_likelihood[2] = sum(log(sapply(1 : dimensions, function (i) {
-  sum.finite(probs[i] * dnorm(data, means[i], sigmas[i]))
+	finite_sum(probabilities[i] * dnorm(data, means[i], sigmas[i]))
 })))
 
 index = 2
-
 
 # Run EM Algorithm till covergence threshold or max iterations is reached
 while (abs(log_likelihood[index] - log_likelihood[index-1]) >= CONVERGENCE_THRESHOLD && index <= MAX_ITERATIONS) {
 	
 	# Expectation step
 	comps = sapply(1 : dimensions, function (i) {
-		probs[i] * dnorm(data, means[i], sigmas[i])
+		probabilities[i] * dnorm(data, means[i], sigmas[i])
 	})
 	comp_sum = rowSums(comps)
 	ps = sapply(1 : dimensions, function (i) {
@@ -43,14 +56,15 @@ while (abs(log_likelihood[index] - log_likelihood[index-1]) >= CONVERGENCE_THRES
 	})
 	
 	# Maximization step
-	probs = sapply(1 : dimensions, function (i) {
-		sum.finite(ps[ ,i]) / length(data)
+	# Update values of the parameters
+	probabilities = sapply(1 : dimensions, function (i) {
+		finite_sum(ps[ ,i]) / length(data)
 	})
 	means = sapply(1 : dimensions, function (i) {
-		sum.finite(ps[ ,i] * data) / sum.finite(ps[, i])
+		finite_sum(ps[ ,i] * data) / finite_sum(ps[, i])
 	})
 	sigmas = sapply(1 : dimensions, function (i) {
-		sqrt(sum.finite(ps[ ,i] * (data - means[i]) ^ 2) / sum.finite(ps[, i]))
+		sqrt(finite_sum(ps[ ,i] * (data - means[i]) ^ 2) / finite_sum(ps[, i]))
 	})
 	
 	index = index + 1
@@ -65,11 +79,14 @@ cat("Computed Cluster Standard Deviations: ", sigmas, "\n")
 # Check final results using the mixtools library
 library(mixtools)
 em = normalmixEM (  x = data, 
-                    k = dimensions,
-                    mu = means,
-                    sigma = sigmas,
-                    maxit = MAX_ITERATIONS,
-                    epsilon = CONVERGENCE_THRESHOLD
-                )
+					k = dimensions,
+					mu = means,
+					sigma = sigmas,
+					maxit = MAX_ITERATIONS,
+					epsilon = CONVERGENCE_THRESHOLD
+				)
 cat("Library Cluster Means: ", em$mu, "\n")
 cat("Library Cluster Standard Deviations: ", em$sigma, "\n")
+
+
+

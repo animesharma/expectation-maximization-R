@@ -11,7 +11,7 @@
 
 <meta name="author" content="Animesh" />
 
-<meta name="date" content="2021-11-07" />
+<meta name="date" content="2021-11-08" />
 
 <title>expectation-maximization.R</title>
 
@@ -167,49 +167,62 @@ pre code {
 
 <h1 class="title toc-ignore">expectation-maximization.R</h1>
 <h4 class="author">Animesh</h4>
-<h4 class="date">2021-11-07</h4>
+<h4 class="date">2021-11-08</h4>
 
 </div>
 
 
-<pre class="r"><code>data = runif(10000)
+<pre class="r"><code># R program to simulate the d-dimensional Expectation Maximization Clustering Algorithm
+
+# Team Members:
+
+# Animesh Sharma                - as3592
+# Yaniv Bronshtein              - yb262
+# Wanying Mo                    - wm318
+# Venkata Krishnam Raju Dalta   - vkd20
+# Vipul Gharde                  - vig4
+# Aditya Maheshwari             - am2971
+# Toshitt Ahuja                 - ta498
+# Fan Shen                      - fs470
+
+# Generate random input data from a uniform distribution
+data = runif(10000)
 
 MAX_ITERATIONS = 5000
 CONVERGENCE_THRESHOLD = 1e-08
-dimensions = 4
+dimensions = 5
 
-# modified sum only considers finite values
-sum.finite = function (data) {
-    sum(data[is.finite(data)])
+# Modified sum function only considers finite values
+finite_sum = function (data) {
+    return (sum(data[is.finite(data)]))
 }
 
-# Initialize using K-Means
+# Initialize parameters using K-Means
 km = kmeans(data, dimensions)$cluster
 means = sapply(1 : dimensions, function (i) {
-  mean(data[km == i])
+    mean(data[km == i])
 })
 sigmas = sapply(1 : dimensions, function (i) {
-  sd(data[km == i])
+    sd(data[km == i])
 })
-probs = sapply(1 : dimensions, function (i) {
-  sum(km == i) / length(km)
+probabilities = sapply(1 : dimensions, function (i) {
+    sum(km == i) / length(km)
 })
 
 # Initial value of expected log likelihood
 log_likelihood = 0
-log_likelihood[2] = sum(sapply(1 : dimensions, function (i) {
-  sum.finite(log(probs[i]) + log(dnorm(data, means[i], sigmas[i])))
-}))
+log_likelihood[2] = sum(log(sapply(1 : dimensions, function (i) {
+    finite_sum(probabilities[i] * dnorm(data, means[i], sigmas[i]))
+})))
 
 index = 2
-
 
 # Run EM Algorithm till covergence threshold or max iterations is reached
 while (abs(log_likelihood[index] - log_likelihood[index-1]) &gt;= CONVERGENCE_THRESHOLD &amp;&amp; index &lt;= MAX_ITERATIONS) {
     
     # Expectation step
     comps = sapply(1 : dimensions, function (i) {
-        probs[i] * dnorm(data, means[i], sigmas[i])
+        probabilities[i] * dnorm(data, means[i], sigmas[i])
     })
     comp_sum = rowSums(comps)
     ps = sapply(1 : dimensions, function (i) {
@@ -217,14 +230,15 @@ while (abs(log_likelihood[index] - log_likelihood[index-1]) &gt;= CONVERGENCE_TH
     })
     
     # Maximization step
-    probs = sapply(1 : dimensions, function (i) {
-        sum.finite(ps[ ,i]) / length(data)
+    # Update values of the parameters
+    probabilities = sapply(1 : dimensions, function (i) {
+        finite_sum(ps[ ,i]) / length(data)
     })
     means = sapply(1 : dimensions, function (i) {
-        sum.finite(ps[ ,i] * data) / sum.finite(ps[, i])
+        finite_sum(ps[ ,i] * data) / finite_sum(ps[, i])
     })
     sigmas = sapply(1 : dimensions, function (i) {
-        sqrt(sum.finite(ps[ ,i] * (data - means[i]) ^ 2) / sum.finite(ps[, i]))
+        sqrt(finite_sum(ps[ ,i] * (data - means[i]) ^ 2) / finite_sum(ps[, i]))
     })
     
     index = index + 1
@@ -232,13 +246,13 @@ while (abs(log_likelihood[index] - log_likelihood[index-1]) &gt;= CONVERGENCE_TH
 }
 
 cat(&quot;Dimensions: &quot;, dimensions, &quot;\n&quot;)</code></pre>
-<pre><code>## Dimensions:  4</code></pre>
+<pre><code>## Dimensions:  5</code></pre>
 <pre class="r"><code>cat(&quot;Iterations: &quot;, index, &quot;\n&quot;)</code></pre>
-<pre><code>## Iterations:  1316</code></pre>
+<pre><code>## Iterations:  1475</code></pre>
 <pre class="r"><code>cat(&quot;Computed Cluster Means: &quot;, means, &quot;\n&quot;)</code></pre>
-<pre><code>## Computed Cluster Means:  0.08915864 0.7232158 0.9256655 0.3609245</code></pre>
+<pre><code>## Computed Cluster Means:  0.03672881 0.1439711 0.7740835 0.9457019 0.428087</code></pre>
 <pre class="r"><code>cat(&quot;Computed Cluster Standard Deviations: &quot;, sigmas, &quot;\n&quot;)</code></pre>
-<pre><code>## Computed Cluster Standard Deviations:  0.05503888 0.1165057 0.04583776 0.1484151</code></pre>
+<pre><code>## Computed Cluster Standard Deviations:  0.02342583 0.06349248 0.09875239 0.03441516 0.1583671</code></pre>
 <pre class="r"><code># Check final results using the mixtools library
 library(mixtools)</code></pre>
 <pre><code>## mixtools package, version 1.2.0, Released 2020-02-05
@@ -250,11 +264,11 @@ library(mixtools)</code></pre>
                     maxit = MAX_ITERATIONS,
                     epsilon = CONVERGENCE_THRESHOLD
                 )</code></pre>
-<pre><code>## number of iterations= 822</code></pre>
+<pre><code>## number of iterations= 558</code></pre>
 <pre class="r"><code>cat(&quot;Library Cluster Means: &quot;, em$mu, &quot;\n&quot;)</code></pre>
-<pre><code>## Library Cluster Means:  0.08915897 0.7232175 0.9256659 0.3609262</code></pre>
+<pre><code>## Library Cluster Means:  0.03672869 0.1439707 0.7740825 0.9457017 0.4280859</code></pre>
 <pre class="r"><code>cat(&quot;Library Cluster Standard Deviations: &quot;, em$sigma, &quot;\n&quot;)</code></pre>
-<pre><code>## Library Cluster Standard Deviations:  0.05503909 0.116505 0.04583746 0.1484159</code></pre>
+<pre><code>## Library Cluster Standard Deviations:  0.02342575 0.06349234 0.09875289 0.03441529 0.1583665</code></pre>
 
 
 
