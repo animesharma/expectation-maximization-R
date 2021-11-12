@@ -12,7 +12,7 @@
 # Fan Shen                      - fs470
 
 # Generate random input data from a uniform distribution
-data = runif(10000)
+data = runif(100)
 
 MAX_ITERATIONS = 5000
 CONVERGENCE_THRESHOLD = 1e-08
@@ -34,6 +34,7 @@ sigmas = sapply(1 : dimensions, function (i) {
 probabilities = sapply(1 : dimensions, function (i) {
 	sum(km == i) / length(km)
 })
+print(probabilities)
 
 # Initial value of expected log likelihood
 log_likelihood = 0
@@ -75,6 +76,19 @@ cat("Dimensions: ", dimensions, "\n")
 cat("Iterations: ", index, "\n")
 cat("Computed Cluster Means: ", means, "\n")
 cat("Computed Cluster Standard Deviations: ", sigmas, "\n")
+
+clusters = matrix(, nrow = length(data), ncol = dimensions)
+
+for(i in 1:length(data)) {
+    index <- arrayInd(which.max(ps[i,]), dimensions)
+    clusters[[i, index]] = data[i]
+}
+
+print(ps)
+print(rowSums(ps))
+
+print("Clusters:\n")
+print(clusters)
 
 # Check final results using the mixtools library
 library(mixtools)
